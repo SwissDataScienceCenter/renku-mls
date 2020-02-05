@@ -31,6 +31,9 @@ from renku.core.models import jsonld
 
 NoneType = type(None)
 
+ML_SCHEMA = {'mls': 'http://www.w3.org/ns/mls#'}
+XML_SCHEMA = {'xsd': 'http://www.w3.org/2001/XMLSchema#'}
+
 _path_attr = partial(
     jsonld.ib,
     converter=Path,
@@ -57,6 +60,15 @@ def _convert_input(value):
     return input_values
 
 
+def _convert_output(value):
+    """Convert output object."""
+    output_values = []
+    for v in value:
+        if 'value' in v:
+            output_values.append(ModelEvaluation.from_jsonld(v))
+    return output_values
+
+
 def _convert_parameter_value(obj):
     """Convert parameter value."""
     if isinstance(obj, dict):
@@ -70,9 +82,36 @@ def _convert_parameters(value):
 
 
 @jsonld.s(
+    type='mls:EvaluationMeasure',
+    slots=True,
+    context=ML_SCHEMA
+)
+class EvaluationMeasure:
+    _id = jsonld.ib(default=None, context='@id', kw_only=True)
+
+@jsonld.s(
+    type='mls:ModelEvaluation',
+    slots=True,
+    context={
+        **ML_SCHEMA,
+        **XML_SCHEMA,
+        'specified_by': 'mls:specifiedBy'
+    }
+)
+class ModelEvaluation:
+    _id = jsonld.ib(default=None, context='@id', kw_only=True)
+    value = jsonld.ib(
+        default=None,
+        context='mls:hasValue',
+        kw_only=True
+    )
+    specified_by = jsonld.ib(default=None, context='mls:specifiedBy', kw_only=True)
+
+
+@jsonld.s(
     type='mls:HyperParameter',
     slots=True,
-    context={'mls': 'http://www.w3.org/ns/mls#'}
+    context=ML_SCHEMA
 )
 class HyperParameter:
     _id = jsonld.ib(default=None, context='@id', kw_only=True)
@@ -81,7 +120,7 @@ class HyperParameter:
 @jsonld.s(
     type='mls:Algorithm',
     slots=True,
-    context={'mls': 'http://www.w3.org/ns/mls#'}
+    context=ML_SCHEMA
 )
 class Algorithm:
     _id = jsonld.ib(default=None, context='@id', kw_only=True)
@@ -91,8 +130,8 @@ class Algorithm:
     type='mls:HyperParameterSetting',
     slots=True,
     context={
-        'mls': 'http://www.w3.org/ns/mls#',
-        'xsd': 'http://www.w3.org/2001/XMLSchema',
+        **ML_SCHEMA,
+        **XML_SCHEMA,
         'specified_by': 'mls:specifiedBy'
     }
 )
@@ -108,7 +147,7 @@ class HyperParameterSetting:
 @jsonld.s(
     type='mls:Implementation',
     context={
-        'mls': 'http://www.w3.org/ns/mls#',
+        **ML_SCHEMA,
         'dcterms': 'http://purl.org/dc/terms/'
     }
 )
@@ -190,7 +229,7 @@ class Implementation:
 @jsonld.s(
     type='mls:Run',
     context={
-        'mls': 'http://www.w3.org/ns/mls#',
+        **ML_SCHEMA,
         'dcterms': 'http://purl.org/dc/terms/',
     },
 )
@@ -216,6 +255,20 @@ class Run(object):
         context='mls:hasInput',
         kw_only=True
     )
+
+    output_values = jsonld.container.list(
+        ModelEvaluation,
+        converter=_convert_output,
+        context='mls:hasOutput',
+        kw_only=True
+    )
+
+    realizes = jsonld.ib(
+        default=None,
+        context='mls:implements',
+        type=Algorithm,
+        converter=_convert_algorithm,
+        kw_only=True)
 
     version = jsonld.ib(default=None, context='dcterms:hasVersion', kw_only=True)
 
