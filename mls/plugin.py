@@ -22,6 +22,7 @@ from copy import deepcopy
 from pathlib import Path
 from renku.core.plugins import hookimpl
 from renku.core.models.cwl.annotation import Annotation
+from uuid import uuid1
 
 from .config import MLS_DIR
 from .models import Run
@@ -38,8 +39,8 @@ class MLS(object):
     def load_model(self, path):
         """Load MLS reference file."""
         if path and path.exists():
-            model = json.load(path.open())
-        return model
+            return json.load(path.open())
+        return {}
 
 
 @hookimpl
@@ -51,7 +52,7 @@ def process_run_annotations(run):
         if p.startswith(str(mls.renku_mls_path)):
             return [
                 Annotation(
-                    id='_:annotation',
+                    id='_:annotation{}'.format(uuid1().fields[0]),
                     source="MLS plugin",
                     body=mls.load_model(Path(p))
                 )
