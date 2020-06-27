@@ -24,7 +24,7 @@ packages = find_packages()
 version_file = open('VERSION')
 
 setup(
-    name='mls',
+    name='renku-mls',
     description='Renku MLS plugin',
     keywords='Renku MLS',
     license='Apache License 2.0',
@@ -32,7 +32,7 @@ setup(
     author_email='viktor.gal@maeth.com',
     install_requires=install_requires,
     packages=packages,
-    entry_points={"renku": ["name_of_plugin = mls.plugin"]},
+    entry_points={"renku": ["name_of_plugin = renkumls.plugin"]},
     zip_safe=False,
     include_package_data=True,
     platforms='any',
