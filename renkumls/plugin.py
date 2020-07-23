@@ -25,7 +25,7 @@ from renku.core.models.cwl.annotation import Annotation
 from uuid import uuid1
 
 from .config import MLS_DIR
-from .models import Run
+from mlsconverters.models import Run
 
 class MLS(object):
     def __init__(self, run):

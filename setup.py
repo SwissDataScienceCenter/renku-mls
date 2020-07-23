@@ -19,7 +19,7 @@
 import os
 from setuptools import find_packages, setup
 
-install_requires = ['renku']
+install_requires = ['mlschema-converters']
 packages = find_packages()
 version_file = open('VERSION')
 
