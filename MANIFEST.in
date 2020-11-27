@@ -1,0 +1,4 @@
+include LICENSE VERSION
+recursive-include renkumls *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]

@@ -19,7 +19,7 @@
 import os
 from setuptools import find_packages, setup
 
-install_requires = ['mlschema-converters']
+install_requires = ['mlschema-converters', 'deepdiff']
 packages = find_packages()
 version_file = open('VERSION')
 
@@ -32,7 +32,10 @@ setup(
     author_email='viktor.gal@maeth.com',
     install_requires=install_requires,
     packages=packages,
-    entry_points={"renku": ["name_of_plugin = renkumls.plugin"]},
+    entry_points={
+        "renku": ["name_of_plugin = renkumls.plugin"],
+        "renku.cli_plugins": ["mls = renkumls.plugin:mls"]
+    },
     zip_safe=False,
     include_package_data=True,
     platforms='any',
