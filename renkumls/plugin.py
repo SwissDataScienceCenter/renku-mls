@@ -87,11 +87,11 @@ def _run_id(activity_id):
 def _graph(client, revision, paths):
     if PG_AVAILABLE:
         provenance_graph = ProvenanceGraph.from_json(client.provenance_graph_path)
-        provenance_graph.custom_bindings = [
-            ("mls", "http://www.w3.org/ns/mls#"),
-            ("oa", "http://www.w3.org/ns/oa#"),
-            ("xsd", "http://www.w3.org/2001/XMLSchema#")
-        ]
+        provenance_graph.custom_bindings = {
+            "mls": "http://www.w3.org/ns/mls#",
+            "oa": "http://www.w3.org/ns/oa#",
+            "xsd": "http://www.w3.org/2001/XMLSchema#"
+        }
         return provenance_graph
 
     renku_graph = Graph(client)
