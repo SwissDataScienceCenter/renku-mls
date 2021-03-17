@@ -24,16 +24,10 @@ import rdflib
 from copy import deepcopy
 from pathlib import Path
 
-from renku.core.commands.client import pass_local_client
-from renku.core.commands.graph import Graph
-from renku.core.commands.format.graph import _conjunctive_graph
 from renku.core.models.cwl.annotation import Annotation
+from renku.core.incubation.command import Command
 from renku.core.plugins import hookimpl
-try:
-    from renku.core.models.provenance.provenance_graph import ProvenanceGraph
-    PG_AVAILABLE = True
-except:
-    PG_AVAILABLE = False
+from renku.core.models.provenance.provenance_graph import ProvenanceGraph
 
 from prettytable import PrettyTable
 from deepdiff import DeepDiff
@@ -84,26 +78,21 @@ def _run_id(activity_id):
     return str(activity_id).split("/")[-1]
 
 
-def _graph(client, revision, paths):
-    if PG_AVAILABLE:
-        provenance_graph = ProvenanceGraph.from_json(client.provenance_graph_path)
-        provenance_graph.custom_bindings = {
-            "mls": "http://www.w3.org/ns/mls#",
-            "oa": "http://www.w3.org/ns/oa#",
-            "xsd": "http://www.w3.org/2001/XMLSchema#"
-        }
-        return provenance_graph
+def _graph(revision, paths):
+    # FIXME: use (revision, paths) filter
+    cmd_result = Command().command(
+        lambda client: ProvenanceGraph.from_json(client.provenance_graph_path)
+    ).build().execute()
+    if cmd_result.status == cmd_result.FAILURE:
+        raise Exception(f"Error creating ProvenanceGraph: {cmd_result.error}!")
 
-    renku_graph = Graph(client)
-    renku_graph.build(paths=paths, revision=revision)
-    cg = _conjunctive_graph(renku_graph)
-
-    cg.bind("mls", "http://www.w3.org/ns/mls#")
-    cg.bind("prov", "http://www.w3.org/ns/prov#")
-    cg.bind("oa", "http://www.w3.org/ns/oa#")
-    cg.bind("schema", "http://schema.org/")
-    cg.bind("xsd", "http://www.w3.org/2001/XMLSchema#")
-    return cg
+    provenance_graph = cmd_result.output
+    provenance_graph.custom_bindings = {
+        "mls": "http://www.w3.org/ns/mls#",
+        "oa": "http://www.w3.org/ns/oa#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#"
+    }
+    return provenance_graph
 
 
 def _create_leaderboard(data, metric, format=None):
@@ -131,10 +120,9 @@ def mls():
 @click.option("--format", default="ascii", help="Choose an output format.")
 @click.option("--metric", default="accuracy", help="Choose metric for the leaderboard")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
-@pass_local_client()
-def leaderboard(client, revision, format, metric, paths):
+def leaderboard(revision, format, metric, paths):
     """Leaderboard based on evaluation metrics of machine learning models"""
-    graph = _graph(client, revision, None)
+    graph = _graph(revision, paths)
     leaderboard = dict()
     for r in graph.query("""SELECT DISTINCT ?type ?value ?run ?runId ?dsPath where {{
         ?em a mls:ModelEvaluation ;
@@ -170,8 +158,7 @@ def leaderboard(client, revision, format, metric, paths):
 @click.option("--format", default="ascii", help="Choose an output format.")
 @click.option("--diff", nargs=2, help="Print the difference between two model revisions")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
-@pass_local_client()
-def params(client, revision, format, paths, diff):
+def params(revision, format, paths, diff):
     """List the hyper-parameter settings of machine learning models"""
     def _param_value(rdf_iteral):
         if not type(rdf_iteral) != rdflib.term.Literal:
@@ -182,7 +169,7 @@ def params(client, revision, format, paths, diff):
             return rdf_iteral.toPython()
 
 
-    graph = _graph(client, revision, paths)
+    graph = _graph(revision, paths)
     model_params = dict()
     for r in graph.query("""SELECT ?runId ?algo ?hp ?value where {{
         ?run a mls:Run ;
