@@ -32,8 +32,8 @@ from renku.core.models.provenance.provenance_graph import ProvenanceGraph
 from prettytable import PrettyTable
 from deepdiff import DeepDiff
 
-from .config import MLS_DIR
 from mlsconverters.models import Run
+from mlsconverters.io import MLS_DIR, COMMON_DIR
 
 
 class MLS(object):
@@ -43,7 +43,7 @@ class MLS(object):
     @property
     def renku_mls_path(self):
         """Return a ``Path`` instance of Renku MLS metadata folder."""
-        return Path(self.run.client.renku_home).joinpath(MLS_DIR)
+        return Path(self.run.client.renku_home).joinpath(MLS_DIR).joinpath(COMMON_DIR)
 
     def load_model(self, path):
         """Load MLS reference file."""
@@ -57,22 +57,22 @@ def process_run_annotations(run):
     """``process_run_annotations`` hook implementation."""
     mls = MLS(run)
 
-    for p in run.paths:
-        if p.startswith(str(mls.renku_mls_path)):
-            path = Path(p)
-            annotation_id = "{activity}/annotations/mls/{id}".format(
-                activity=run._id, id=path.parts[-2]
+    annotations = []
+    for p in mls.renku_mls_path.iterdir():
+        mls_annotation = mls.load_model(p)
+        model_id = mls_annotation["@id"]
+        annotation_id = "{activity}/annotations/mls/{id}".format(
+            activity=run._id, id=model_id
+        )
+        p.unlink()
+        annotations.append(
+            Annotation(
+                id=annotation_id,
+                source="MLS plugin",
+                body=mls_annotation
             )
-            return [
-                Annotation(
-                    id=annotation_id,
-                    source="MLS plugin",
-                    body=mls.load_model(path)
-                )
-            ]
-
-    return []
-
+        )
+    return annotations
 
 def _run_id(activity_id):
     return str(activity_id).split("/")[-1]
