@@ -16,44 +16,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from setuptools import find_packages, setup
 
-install_requires = ['mlschema-converters', 'deepdiff' , 'renku>=0.13.0', 'prettytable']
+install_requires = ["mlschema-converters", "deepdiff", "renku>=0.15.0", "prettytable"]
 packages = find_packages()
-version_file = open('VERSION')
+version_file = open("VERSION")
 
 setup(
-    name='renku-mls',
-    description='Renku MLS plugin',
-    keywords='Renku MLS',
-    license='Apache License 2.0',
-    author='Viktor Gal',
-    author_email='viktor.gal@maeth.com',
+    name="renku-mls",
+    description="Renku MLS plugin",
+    keywords="Renku MLS",
+    license="Apache License 2.0",
+    author="Viktor Gal",
+    author_email="viktor.gal@maeth.com",
     install_requires=install_requires,
     packages=packages,
     entry_points={
         "renku": ["name_of_plugin = renkumls.plugin"],
-        "renku.cli_plugins": ["mls = renkumls.plugin:mls"]
+        "renku.cli_plugins": ["mls = renkumls.plugin:mls"],
     },
     zip_safe=False,
     include_package_data=True,
-    platforms='any',
-    version = version_file.read().strip(),
+    platforms="any",
+    version=version_file.read().strip(),
     classifiers=[
-        'Environment :: Web Environment',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: Apache Software License',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python',
-        'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Development Status :: 4 - Beta',
+        "Environment :: Web Environment",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
+        "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Development Status :: 4 - Beta",
     ],
 )
