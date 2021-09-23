@@ -18,7 +18,7 @@
 
 from setuptools import find_packages, setup
 
-install_requires = ["mlschema-converters", "deepdiff", "renku>=0.16.1", "prettytable"]
+install_requires = ["mlschema-converters", "deepdiff", "renku>=0.16.0", "prettytable"]
 packages = find_packages()
 version_file = open("VERSION")
 
