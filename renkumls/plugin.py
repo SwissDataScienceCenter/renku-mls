@@ -16,87 +16,114 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import re
 import json
 import click
 import rdflib
-from copy import deepcopy
 from pathlib import Path
+from typing import List
 
-from renku.core.models.cwl.annotation import Annotation
-from renku.core.incubation.command import Command
-from renku.core.plugins import hookimpl
-from renku.core.models.provenance.provenance_graph import ProvenanceGraph
+from renku.core.commands.graph import (
+    _get_graph_for_all_objects,
+    update_nested_node_host,
+)
+from renku.core.commands.format.graph import _conjunctive_graph
 from renku.core.errors import RenkuException
+from renku.core.management.command_builder.command import Command, inject
+from renku.core.management.interface.client_dispatcher import IClientDispatcher
+from renku.core.models.provenance.annotation import Annotation
+from renku.core.plugins import hookimpl
+from renku.core.utils.urls import get_host
 
 from prettytable import PrettyTable
 from deepdiff import DeepDiff
 
-from mlsconverters.models import Run
 from mlsconverters.io import MLS_DIR, COMMON_DIR
 
 
 class MLS(object):
-    def __init__(self, run):
-        self.run = run
+    def __init__(self, activity):
+        self._activity = activity
 
     @property
-    def renku_mls_path(self):
+    @inject.autoparams("client_dispatcher")
+    def renku_mls_path(self, client_dispatcher: IClientDispatcher):
         """Return a ``Path`` instance of Renku MLS metadata folder."""
-        return Path(self.run.client.renku_home).joinpath(MLS_DIR).joinpath(COMMON_DIR)
+        return (
+            Path(client_dispatcher.current_client.renku_home)
+            .joinpath(MLS_DIR)
+            .joinpath(COMMON_DIR)
+        )
 
-    def load_model(self, path):
+    def _load_model(self, path):
         """Load MLS reference file."""
         if path and path.exists():
             return json.load(path.open())
         return {}
 
+    @property
+    def annotations(self) -> List[Annotation]:
+        _annotations = []
+        for p in self.renku_mls_path.iterdir():
+            mls_annotation = self._load_model(p)
+            model_id = mls_annotation["@id"]
+            annotation_id = "{activity}/annotations/mls/{id}".format(
+                activity=self._activity.id, id=model_id
+            )
+            p.unlink()
+            _annotations.append(
+                Annotation(id=annotation_id, source="MLS plugin", body=mls_annotation)
+            )
+        return _annotations
+
 
 @hookimpl
-def process_run_annotations(run):
-    """``process_run_annotations`` hook implementation."""
-    mls = MLS(run)
-
-    annotations = []
-    for p in mls.renku_mls_path.iterdir():
-        mls_annotation = mls.load_model(p)
-        model_id = mls_annotation["@id"]
-        annotation_id = "{activity}/annotations/mls/{id}".format(
-            activity=run._id, id=model_id
-        )
-        p.unlink()
-        annotations.append(
-            Annotation(id=annotation_id, source="MLS plugin", body=mls_annotation)
-        )
-    return annotations
+def activity_annotations(activity):
+    """``activity_annotations`` hook implementation."""
+    mls = MLS(activity)
+    return mls.annotations
 
 
 def _run_id(activity_id):
     return str(activity_id).split("/")[-1]
 
 
-def _load_provenance_graph(client):
-    if not client.provenance_graph_path.exists():
-        raise RenkuException(
-            """Provenance graph has not been generated!
-Please run 'renku graph generate' to create the project's provenance graph
-"""
-        )
-    return ProvenanceGraph.from_json(client.provenance_graph_path)
+@inject.autoparams("client_dispatcher")
+def _export_graph(client_dispatcher: IClientDispatcher):
+    graph = _get_graph_for_all_objects()
+
+    # NOTE: rewrite ids for current environment
+    host = get_host(client_dispatcher.current_client)
+
+    for node in graph:
+        update_nested_node_host(node, host)
+
+    return graph
 
 
 def _graph(revision, paths):
-    # FIXME: use (revision, paths) filter
-    cmd_result = Command().command(_load_provenance_graph).build().execute()
+    cmd_result = (
+        Command()
+        .command(_export_graph)
+        .with_database(write=False)
+        .require_migration()
+        .build()
+        .execute()
+    )
 
-    provenance_graph = cmd_result.output
-    provenance_graph.custom_bindings = {
-        "mls": "http://www.w3.org/ns/mls#",
-        "oa": "http://www.w3.org/ns/oa#",
-        "xsd": "http://www.w3.org/2001/XMLSchema#",
-    }
-    return provenance_graph
+    if cmd_result.status == cmd_result.FAILURE:
+        raise RenkuException("asdf")
+    graph = _conjunctive_graph(cmd_result.output)
+
+    graph.bind("prov", "http://www.w3.org/ns/prov#")
+    graph.bind("foaf", "http://xmlns.com/foaf/0.1/")
+    graph.bind("schema", "http://schema.org/")
+    graph.bind("renku", "https://swissdatasciencecenter.github.io/renku-ontology/")
+    graph.bind("mls", "http://www.w3.org/ns/mls#")
+    graph.bind("oa", "http://www.w3.org/ns/oa#")
+    graph.bind("xsd", "http://www.w3.org/2001/XMLSchema#")
+
+    return graph
 
 
 def _create_leaderboard(data, metric, format=None):
@@ -206,7 +233,7 @@ def params(revision, format, paths, diff):
                 {"algorithm": str(r.algo), "hp": {str(r.hp): _param_value(r.value)}}
             )
 
-    if len(diff) > 0:
+    if diff:
         for r in diff:
             if r not in model_params:
                 print("Unknown revision provided for diff parameter: {}".format(r))
