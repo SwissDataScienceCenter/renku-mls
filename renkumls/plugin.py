@@ -146,6 +146,7 @@ def _create_leaderboard(data, metric, format=None):
 
 @click.group()
 def mls():
+    """MLSchema plugin commands."""
     pass
 
 
