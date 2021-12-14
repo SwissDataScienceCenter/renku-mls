@@ -32,7 +32,7 @@ setup(
     install_requires=install_requires,
     packages=packages,
     entry_points={
-        "renku": ["name_of_plugin = renkumls.plugin"],
+        "renku": ["mls = renkumls.plugin"],
         "renku.cli_plugins": ["mls = renkumls.plugin:mls"],
     },
     zip_safe=False,
