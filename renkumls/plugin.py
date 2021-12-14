@@ -64,6 +64,9 @@ class MLS(object):
     @property
     def annotations(self) -> List[Annotation]:
         _annotations = []
+        if not self.renku_mls_path.exists():
+            return _annotations
+
         for p in self.renku_mls_path.iterdir():
             mls_annotation = self._load_model(p)
             model_id = mls_annotation["@id"]
