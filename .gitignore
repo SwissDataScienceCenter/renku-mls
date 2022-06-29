@@ -128,3 +128,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Idea software family
+.idea/
+*.ipr
+*.iml
+*.iws
+
