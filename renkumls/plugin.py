@@ -19,21 +19,18 @@
 import re
 import json
 import click
+import pyld
 import rdflib
 from pathlib import Path
 from typing import List
 
-from renku.core.commands.graph import (
-    _get_graph_for_all_objects,
-    update_nested_node_host,
-)
-from renku.core.commands.format.graph import _conjunctive_graph
+from renku.command.graph import _get_graph_for_all_objects, update_nested_node_host
 from renku.core.errors import RenkuException
-from renku.core.management.command_builder.command import Command, inject
-from renku.core.management.interface.client_dispatcher import IClientDispatcher
-from renku.core.models.provenance.annotation import Annotation
-from renku.core.plugins import hookimpl
-from renku.core.utils.urls import get_host
+from renku.command.command_builder.command import Command, inject
+from renku.core.interface.client_dispatcher import IClientDispatcher
+from renku.domain_model.provenance.annotation import Annotation
+from renku.core.plugin import hookimpl
+from renku.core.util.urls import get_host
 
 from prettytable import PrettyTable
 from deepdiff import DeepDiff
@@ -49,11 +46,7 @@ class MLS(object):
     @inject.autoparams("client_dispatcher")
     def renku_mls_path(self, client_dispatcher: IClientDispatcher):
         """Return a ``Path`` instance of Renku MLS metadata folder."""
-        return (
-            Path(client_dispatcher.current_client.renku_home)
-            .joinpath(MLS_DIR)
-            .joinpath(COMMON_DIR)
-        )
+        return Path(client_dispatcher.current_client.renku_home).joinpath(MLS_DIR).joinpath(COMMON_DIR)
 
     def _load_model(self, path):
         """Load MLS reference file."""
@@ -70,13 +63,9 @@ class MLS(object):
         for p in self.renku_mls_path.iterdir():
             mls_annotation = self._load_model(p)
             model_id = mls_annotation["@id"]
-            annotation_id = "{activity}/annotations/mls/{id}".format(
-                activity=self._activity.id, id=model_id
-            )
+            annotation_id = "{activity}/annotations/mls/{id}".format(activity=self._activity.id, id=model_id)
             p.unlink()
-            _annotations.append(
-                Annotation(id=annotation_id, source="MLS plugin", body=mls_annotation)
-            )
+            _annotations.append(Annotation(id=annotation_id, source="MLS plugin", body=mls_annotation))
         return _annotations
 
 
@@ -104,15 +93,19 @@ def _export_graph(client_dispatcher: IClientDispatcher):
     return graph
 
 
+def _conjunctive_graph(graph):
+    """Convert a renku ``Graph`` to an rdflib ``ConjunctiveGraph``."""
+
+    def to_jsonld(graph, format):
+        """Return formatted graph in JSON-LD ``format`` function."""
+        output = getattr(pyld.jsonld, format)(graph)
+        return json.dumps(output, indent=2)
+
+    return rdflib.ConjunctiveGraph().parse(data=to_jsonld(graph, "expand"), format="json-ld")
+
+
 def _graph(revision, paths):
-    cmd_result = (
-        Command()
-        .command(_export_graph)
-        .with_database(write=False)
-        .require_migration()
-        .build()
-        .execute()
-    )
+    cmd_result = Command().command(_export_graph).with_database(write=False).require_migration().build().execute()
 
     if cmd_result.status == cmd_result.FAILURE:
         raise RenkuException("asdf")
@@ -186,9 +179,7 @@ def leaderboard(revision, format, metric, paths):
     if len(paths):
         filtered_board = dict()
         for path in paths:
-            filtered_board.update(
-                dict(filter(lambda x: path in x[1]["inputs"], leaderboard.items()))
-            )
+            filtered_board.update(dict(filter(lambda x: path in x[1]["inputs"], leaderboard.items())))
         print(_create_leaderboard(filtered_board, metric))
     else:
         print(_create_leaderboard(leaderboard, metric))
@@ -201,9 +192,7 @@ def leaderboard(revision, format, metric, paths):
     help="The git revision to generate the log for, default: HEAD",
 )
 @click.option("--format", default="ascii", help="Choose an output format.")
-@click.option(
-    "--diff", nargs=2, help="Print the difference between two model revisions"
-)
+@click.option("--diff", nargs=2, help="Print the difference between two model revisions")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
 def params(revision, format, paths, diff):
     """List the hyper-parameter settings of machine learning models"""
@@ -233,9 +222,7 @@ def params(revision, format, paths, diff):
         if run_id in model_params:
             model_params[run_id]["hp"][str(r.hp)] = _param_value(r.value)
         else:
-            model_params[run_id] = dict(
-                {"algorithm": str(r.algo), "hp": {str(r.hp): _param_value(r.value)}}
-            )
+            model_params[run_id] = dict({"algorithm": str(r.algo), "hp": {str(r.hp): _param_value(r.value)}})
 
     if diff:
         for r in diff:
@@ -247,9 +234,7 @@ def params(revision, format, paths, diff):
             print("\t- {}".format(model_params[diff[0]]["algorithm"]))
             print("\t+ {}".format(model_params[diff[1]]["algorithm"]))
         else:
-            params_diff = DeepDiff(
-                model_params[diff[0]], model_params[diff[1]], ignore_order=True
-            )
+            params_diff = DeepDiff(model_params[diff[0]], model_params[diff[1]], ignore_order=True)
             output = PrettyTable()
             output.field_names = ["Hyper-Parameter", "Old", "New"]
             output.align["Hyper-Parameter"] = "l"
