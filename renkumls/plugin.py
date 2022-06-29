@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import List
 
 from renku.command.graph import _get_graph_for_all_objects, update_nested_node_host
-from renku.core.errors import RenkuException
+from renku.core import errors
 from renku.command.command_builder.command import Command, inject
 from renku.core.interface.client_dispatcher import IClientDispatcher
 from renku.domain_model.provenance.annotation import Annotation
@@ -108,7 +108,8 @@ def _graph(revision, paths):
     cmd_result = Command().command(_export_graph).with_database(write=False).require_migration().build().execute()
 
     if cmd_result.status == cmd_result.FAILURE:
-        raise RenkuException("asdf")
+        raise errors.OperationError("Cannot export Renku graph.")
+
     graph = _conjunctive_graph(cmd_result.output)
 
     graph.bind("prov", "http://www.w3.org/ns/prov#")
