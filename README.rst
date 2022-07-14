@@ -16,7 +16,7 @@
     limitations under the License.
 
 .. image:: https://renkulab.io/renku-badge.svg
-    :target: https://renkulab.io/projects/learn-renku/renku-mls-plugin/sessions/new?autostart=1
+    :target: https://renkulab.io/projects/learn-renku/plugins/renku-mls-plugin/sessions/new?autostart=1
     :alt: launch demo
 
 .. image:: https://readthedocs.org/projects/renku-mls/badge/?version=latest&style=flat
@@ -92,4 +92,4 @@ Demo
 
 .. image:: images/sneak-peak.gif
 
-To try it live, `launch a session from an example project <https://renkulab.io/projects/learn-renku/renku-mls-plugin/sessions/new?autostart=1>`_ on renkulab.io.
+To try it live, `launch a session from an example project <https://renkulab.io/projects/learn-renku/plugins/renku-mls-plugin/sessions/new?autostart=1>`_ on renkulab.io.
