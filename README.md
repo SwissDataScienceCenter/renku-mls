@@ -1,4 +1,5 @@
-[![launch - renku](https://renkulab.io/renku-badge.svg)](https://renkulab.io/projects/rok.roskar/renku-mls-plugin/sessions/new?autostart=1)
+[![launch - renku](https://renkulab.io/renku-badge.svg)](https://renkulab.io/projects/learn-renku/renku-mls-plugin/sessions/new?autostart=1)
+![Docs](https://readthedocs.org/projects/renku-mls/badge/?version=latest&style=flat)
 
 # Renku MLS (machine learning schema) plug-in
 
@@ -20,5 +21,5 @@ with classification tasks and the following metrics: `accuracy_score`,
 ![renku mls leaderboard](images/sneak-peak.gif)
 
 To try it live, [launch a session from an example
-project](https://renkulab.io/projects/rok.roskar/renku-mls-plugin/sessions/new?autostart=1)
+project](https://renkulab.io/projects/learn-renku/renku-mls-plugin/sessions/new?autostart=1)
 on renkulab.io.
