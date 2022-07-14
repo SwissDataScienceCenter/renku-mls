@@ -2,7 +2,7 @@ name: publish package
 
 on:
   release:
-  - published
+    types: [published]
 
 - name: Build Package
   run: |
