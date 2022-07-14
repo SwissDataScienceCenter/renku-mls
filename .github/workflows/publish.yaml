@@ -1,0 +1,15 @@
+name: publish package
+
+on:
+  release:
+  - published
+
+- name: Build Package
+  run: |
+    pip install setuptools wheel
+    python setup.py sdist bdist_wheel
+- name: pypi-publish
+  uses: pypa/gh-action-pypi-publish@v1.5.0
+  with:
+    user: sdsc-org
+    password: ${{ secrets.PYPI_ACCESS_TOKEN }}
