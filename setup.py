@@ -18,7 +18,14 @@
 
 from setuptools import find_packages, setup
 
-install_requires = ["deepdiff", "mlschema-converters", "prettytable", "pyld", "rdflib", "renku>=1.2.0"]
+install_requires = [
+    "deepdiff",
+    "mlschema-converters",
+    "prettytable",
+    "pyld",
+    "rdflib",
+    "renku>=1.2.0",
+]
 packages = find_packages()
 version_file = open("VERSION")
 
@@ -27,8 +34,8 @@ setup(
     description="Renku MLS plugin",
     keywords="Renku MLS",
     license="Apache License 2.0",
-    author="Viktor Gal",
-    author_email="viktor.gal@maeth.com",
+    author="Renku team @ SDSC",
+    author_email="renku@datascience.ch",
     install_requires=install_requires,
     packages=packages,
     entry_points={
