@@ -16,5 +16,5 @@ jobs:
     - name: pypi-publish
       uses: pypa/gh-action-pypi-publish@v1.5.0
       with:
-        user: sdsc-org
+        user: __token__
         password: ${{ secrets.PYPI_ACCESS_TOKEN }}
