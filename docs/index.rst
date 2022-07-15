@@ -11,7 +11,7 @@ Renku MLS documentation
    :caption: Contents:
 
 
-.. include:: gettingstarted.rst
+.. include:: ../README.rst
 
 Indices and tables
 ==================
