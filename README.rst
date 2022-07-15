@@ -38,8 +38,8 @@ Getting started
 ---------------
 .. _gettingstarted-reference:
 
-In the project make sure that the machine learning models (e.g. scikit-learn, keras, xgboost etc) are exported
-using mlschema-model-converters_ plugin.
+In the project make sure that the machine learning models (e.g. scikit-learn,
+keras, xgboost etc) are exported using mlschema-model-converters_ plugin.
 
 .. _mlschema-model-converters: https://pypi.org/project/mlschema-converters/
 
@@ -58,14 +58,18 @@ using mlschema-model-converters_ plugin.
 
     export(model, evaluation_measure=(accuracy_score, acc))
 
-Using explicitly the `export` function the details of the supplied model are going to
-be exposed to renku's knowledge graph in JSON-LD format.
+The `export` function persists the metadata about the model in Renku's knowledge
+graph.
 
-Renku MLS plugin provides couple of command line arguments for ease of quering the
-knowledge graph for exposed machine learning models in a renku project.
+CLI Commands
+------------
+
+The Renku MLS plugin provides a few convenient CLI commands that query
+the knowledge graph for machine learning models in a Renku project.
 
 Leaderboard
------------
+^^^^^^^^^^^
+
 `renku mls leaderboard` provides a quick overview of the machine learning models
 used in the project:
 
@@ -79,7 +83,8 @@ Moreover, it will provide information of the type of model that was used as well
 of those models.
 
 Hyper-Parameters
-----------------
+^^^^^^^^^^^^^^^^
+
 `renku mls params` provides the hyper-parameter settings of a specific ML model in the project.
 If no `run-id` is provided, hyper-paramaters of all the models in project will be listed.
 
