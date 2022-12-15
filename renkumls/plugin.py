@@ -16,26 +16,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
 import json
+import re
+from typing import List
+
 import click
 import pyld
 import rdflib
-from pathlib import Path
-from typing import List
-
-from renku.command.graph import _get_graph_for_all_objects, update_nested_node_host
+from deepdiff import DeepDiff
+from mlsconverters.io import COMMON_DIR, MLS_DIR
+from prettytable import PrettyTable
+from renku.command.command_builder.command import Command
+from renku.command.graph import get_graph_for_all_objects, update_nested_node_host
 from renku.core import errors
-from renku.command.command_builder.command import Command, inject
-from renku.core.interface.client_dispatcher import IClientDispatcher
-from renku.domain_model.provenance.annotation import Annotation
 from renku.core.plugin import hookimpl
 from renku.core.util.urls import get_host
-
-from prettytable import PrettyTable
-from deepdiff import DeepDiff
-
-from mlsconverters.io import MLS_DIR, COMMON_DIR
+from renku.domain_model.project_context import project_context
+from renku.domain_model.provenance.annotation import Annotation
 
 
 class MLS(object):
@@ -43,10 +40,9 @@ class MLS(object):
         self._activity = activity
 
     @property
-    @inject.autoparams("client_dispatcher")
-    def renku_mls_path(self, client_dispatcher: IClientDispatcher):
+    def renku_mls_path(self):
         """Return a ``Path`` instance of Renku MLS metadata folder."""
-        return Path(client_dispatcher.current_client.renku_home).joinpath(MLS_DIR).joinpath(COMMON_DIR)
+        return project_context.metadata_path / MLS_DIR / COMMON_DIR
 
     def _load_model(self, path):
         """Load MLS reference file."""
@@ -80,12 +76,11 @@ def _run_id(activity_id):
     return str(activity_id).split("/")[-1]
 
 
-@inject.autoparams("client_dispatcher")
-def _export_graph(client_dispatcher: IClientDispatcher):
-    graph = _get_graph_for_all_objects()
+def _export_graph():
+    graph = get_graph_for_all_objects()
 
     # NOTE: rewrite ids for current environment
-    host = get_host(client_dispatcher.current_client)
+    host = get_host()
 
     for node in graph:
         update_nested_node_host(node, host)
