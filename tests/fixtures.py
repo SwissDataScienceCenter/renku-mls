@@ -78,6 +78,7 @@ def renku_project(tmp_path):
             config.set("user", "name", "Renku Bot")
             config.set("user", "email", "renku@datascience.ch")
             config.set("pull", "rebase", "false")
+            config.write_to_path()
             project_context.clear()
             with project_context.with_path(project):
                 communication.disable()
