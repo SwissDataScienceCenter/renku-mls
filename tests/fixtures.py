@@ -17,6 +17,7 @@
 # limitations under the License.
 """Renku MLS test fixtures."""
 import contextlib
+import inspect
 import os
 import os.path
 import shutil
@@ -29,6 +30,7 @@ from typing import Optional, Sequence, Union
 import pytest
 from click.testing import CliRunner
 from dulwich import porcelain
+from dulwich.repo import Repo
 from renku.core.util import communication
 from renku.domain_model.project_context import project_context
 from renku.ui.cli.init import init
@@ -96,6 +98,43 @@ def renku_project(tmp_path):
                 shutil.rmtree(project)
             except OSError:
                 pass
+
+
+@pytest.fixture(scope="function")
+def project_with_script(renku_project):
+    """A renku project with a model training script."""
+    repo = Repo(renku_project)
+    script = """
+        from xgboost import XGBClassifier
+        from sklearn.metrics import accuracy_score
+        from sklearn.datasets import load_breast_cancer
+        from sklearn.model_selection import train_test_split
+        from mlsconverters import export
+
+        cancer = load_breast_cancer()
+        X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target, random_state={state})
+
+        X_train = cancer.data
+        y_train = cancer.target
+
+        # model creation
+        model = XGBClassifier()
+        model.fit(X_train, y_train)
+
+        # model eval
+        y_pred = model.predict(X_test)
+        acc = accuracy_score(y_test, y_test)
+        export(model, evaluation_measure=(accuracy_score, acc))
+    """
+    script_file = renku_project / "script.py"
+
+    def _write_script(state: int):
+        """Create/update a script file."""
+        script_file.write_text(inspect.cleandoc(script.format(state=42)))
+        porcelain.add(repo, script_file)
+        porcelain.commit(repo, "commit script")
+
+    return script_file, _write_script
 
 
 @pytest.fixture()

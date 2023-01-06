@@ -16,52 +16,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Renku MLS leaderboard tests."""
-import inspect
 
 from click.testing import CliRunner
-from dulwich import porcelain
-from dulwich.repo import Repo
 
 from renkumls.plugin import leaderboard, params
 
 
-def test_leaderboard(renku_project, run_shell):
+def test_leaderboard(project_with_script, run_shell):
     """Test that a leaderboard can be gotten for several runs."""
-    repo = Repo(renku_project)
-    script = """
-        from xgboost import XGBClassifier
-        from sklearn.metrics import accuracy_score
-        from sklearn.datasets import load_breast_cancer
-        from sklearn.model_selection import train_test_split
-        from mlsconverters import export
+    script_file, write_script = project_with_script
 
-        cancer = load_breast_cancer()
-        X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target, random_state={state})
-
-        X_train = cancer.data
-        y_train = cancer.target
-
-        # model creation
-        model = XGBClassifier()
-        model.fit(X_train, y_train)
-
-        # model eval
-        y_pred = model.predict(X_test)
-        acc = accuracy_score(y_test, y_test)
-        export(model, evaluation_measure=(accuracy_score, acc))
-    """
-    script_file = renku_project / "script.py"
-    script_file.write_text(inspect.cleandoc(script.format(state=42)))
-    porcelain.add(repo, script_file)
-    porcelain.commit(repo, "first commit")
+    write_script(42)
 
     output = run_shell(f"renku run --no-output -- python {str(script_file)}")
     assert b"" == output[0]
     assert output[1] is None
 
-    script_file.write_text(inspect.cleandoc(script.format(state=99)))
-    porcelain.add(repo, script_file)
-    porcelain.commit(repo, "second commit")
+    write_script(123)
 
     output = run_shell(f"renku run --no-output -- python {str(script_file)}")
     assert b"" == output[0]
@@ -74,43 +45,17 @@ def test_leaderboard(renku_project, run_shell):
     assert result.output.count("script.py") == 2
 
 
-def test_parameters(renku_project, run_shell):
-    """Test that a leaderboard can be gotten for several runs."""
-    repo = Repo(renku_project)
-    script = """
-        from xgboost import XGBClassifier
-        from sklearn.metrics import accuracy_score
-        from sklearn.datasets import load_breast_cancer
-        from sklearn.model_selection import train_test_split
-        from mlsconverters import export
+def test_parameters(project_with_script, run_shell):
+    """Test that a model parameters can be shown for several runs."""
+    script_file, write_script = project_with_script
 
-        cancer = load_breast_cancer()
-        X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target, random_state={state})
-
-        X_train = cancer.data
-        y_train = cancer.target
-
-        # model creation
-        model = XGBClassifier()
-        model.fit(X_train, y_train)
-
-        # model eval
-        y_pred = model.predict(X_test)
-        acc = accuracy_score(y_test, y_test)
-        export(model, evaluation_measure=(accuracy_score, acc))
-    """
-    script_file = renku_project / "script.py"
-    script_file.write_text(inspect.cleandoc(script.format(state=42)))
-    porcelain.add(repo, script_file)
-    porcelain.commit(repo, "first commit")
+    write_script(42)
 
     output = run_shell(f"renku run --no-output -- python {str(script_file)}")
     assert b"" == output[0]
     assert output[1] is None
 
-    script_file.write_text(inspect.cleandoc(script.format(state=99)))
-    porcelain.add(repo, script_file)
-    porcelain.commit(repo, "second commit")
+    write_script(99)
 
     output = run_shell(f"renku run --no-output -- python {str(script_file)}")
     assert b"" == output[0]
