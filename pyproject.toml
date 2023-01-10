@@ -1,0 +1,103 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright 2017-2022 - Swiss Data Science Center (SDSC)
+# A partnership between École Polytechnique Fédérale de Lausanne (EPFL) and
+# Eidgenössische Technische Hochschule Zürich (ETHZ).
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[project]
+name = "renku-mls"
+description = "Renku MLS plugin"
+readme = "README.rst"
+requires-python = ">=3.7"
+keywords = ["Renku MLS"]
+license = {text = "Apache License 2.0"}
+version = "0.5.0"
+authors = [
+    { name = "Renku team @ SDSC", email = "renku@datascience.ch"}
+]
+classifiers = [
+    "Environment :: Plugins",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "deepdiff",
+    "mlschema-converters>=0.1.2",
+    "prettytable",
+    "pyld",
+    "rdflib",
+    "renku>=2.0.1,<3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=22.6.0",
+    "dulwich==0.20.50",
+    "flake8>=6.0.0,<7.0.0",
+    "isort<5.10.2,>=5.3.2",
+    "pre-commit>=2.20.0,<3.0.0",
+    "pydocstyle<6.1.2,>=4.0.1",
+    "pytest>=7.2.0,<8.0.0",
+    "pytest-pep8==1.0.6",
+    "pytest-flake8==1.1.1",
+    "scikit-learn==1.2.0",
+    "xgboost==1.7.2",
+]
+
+[project.entry-points.renku]
+mls = "renkumls.plugin"
+[project.entry-points."renku.cli_plugins"]
+mls = "renkumls.plugin:mls"
+
+[tool.setuptools]
+packages = ["renkumls"]
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 120
+profile = "black"
+
+[tool.black]
+line-length = 120
+target-version = ["py37", "py38", "py39", "py310"]
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.eggs
+    | \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | docs/conf.py
+)
+'''
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2020 - Viktor Gal
+# Copyright 2020-2023 - Swiss Data Science Center
 # A partnership between École Polytechnique Fédérale de Lausanne (EPFL) and
 # Eidgenössische Technische Hochschule Zürich (ETHZ).
 #
@@ -15,6 +15,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Renku MLS plugin."""
 
 import json
 import re
@@ -36,7 +37,10 @@ from renku.domain_model.provenance.annotation import Annotation
 
 
 class MLS(object):
+    """MLS class for adding metadata to renku."""
+
     def __init__(self, activity):
+        """Create a new class instance."""
         self._activity = activity
 
     @property
@@ -52,6 +56,7 @@ class MLS(object):
 
     @property
     def annotations(self) -> List[Annotation]:
+        """Annotations to add to renku."""
         _annotations = []
         if not self.renku_mls_path.exists():
             return _annotations
@@ -73,10 +78,12 @@ def activity_annotations(activity):
 
 
 def _run_id(activity_id):
+    """Get an id for a run."""
     return str(activity_id).split("/")[-1]
 
 
 def _export_graph():
+    """Get graph from renku."""
     graph = get_graph_for_all_objects()
 
     # NOTE: rewrite ids for current environment
@@ -100,6 +107,7 @@ def _conjunctive_graph(graph):
 
 
 def _graph(revision, paths):
+    """Get an RDF graph for the project."""
     cmd_result = Command().command(_export_graph).with_database(write=False).require_migration().build().execute()
 
     if cmd_result.status == cmd_result.FAILURE:
@@ -119,6 +127,7 @@ def _graph(revision, paths):
 
 
 def _create_leaderboard(data, metric, format=None):
+    """Create a leaderboard for metrics."""
     leaderboard = PrettyTable()
     leaderboard.field_names = ["Run ID", "Model", "Inputs", metric]
     leaderboard.align["Model"] = "l"
@@ -135,7 +144,7 @@ def _create_leaderboard(data, metric, format=None):
 
 @click.group()
 def mls():
-    """MLSchema plugin commands."""
+    """Click MLSchema plugin commands."""
     pass
 
 
@@ -149,7 +158,7 @@ def mls():
 @click.option("--metric", default="accuracy", help="Choose metric for the leaderboard")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
 def leaderboard(revision, format, metric, paths):
-    """Leaderboard based on evaluation metrics of machine learning models"""
+    """Leaderboard based on evaluation metrics of machine learning models."""
     graph = _graph(revision, paths)
     leaderboard = dict()
     for r in graph.query(
@@ -191,7 +200,7 @@ def leaderboard(revision, format, metric, paths):
 @click.option("--diff", nargs=2, help="Print the difference between two model revisions")
 @click.argument("paths", type=click.Path(exists=False), nargs=-1)
 def params(revision, format, paths, diff):
-    """List the hyper-parameter settings of machine learning models"""
+    """List the hyper-parameter settings of machine learning models."""
 
     def _param_value(rdf_iteral):
         if not type(rdf_iteral) != rdflib.term.Literal:

@@ -46,7 +46,16 @@ keras, xgboost etc) are exported using mlschema-model-converters_ plugin.
 .. code-block:: python
 
     from xgboost import XGBClassifier
+    from sklearn.metrics import accuracy_score
+    from sklearn.datasets import load_breast_cancer
+    from sklearn.model_selection import train_test_split
     from mlsconverters import export
+
+    cancer = load_breast_cancer()
+    X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target, random_state=42)
+
+    X_train = cancer.data
+    y_train = cancer.target
 
     # model creation
     model = XGBClassifier()
@@ -54,7 +63,7 @@ keras, xgboost etc) are exported using mlschema-model-converters_ plugin.
 
     # model eval
     y_pred = model.predict(X_test)
-    acc = accuracy_score(y_test, y_pred)
+    acc = accuracy_score(y_test, y_test)
 
     export(model, evaluation_measure=(accuracy_score, acc))
 
